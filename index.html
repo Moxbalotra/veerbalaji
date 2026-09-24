@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Coming Soon — Morphix</title>
+<style>
+  :root{
+    --bg: #060810;
+    --bg2: #0b0f1e;
+    --panel: #0e1326;
+    --line: rgba(140,160,255,0.14);
+    --text: #e7ebff;
+    --muted: #7d87ad;
+    --accent: #7c5cff;
+    --accent2: #35e6c4;
+    --accent-soft: rgba(124,92,255,0.35);
+  }
+  *{box-sizing:border-box; margin:0; padding:0;}
+  html,body{height:100%;}
+  body{
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    overflow-x:hidden;
+    min-height:100%;
+    padding-top: env(safe-area-inset-top,0px);
+    padding-bottom: env(safe-area-inset-bottom,0px);
+    position:relative;
+  }
+
+  /* ---------- background layers ---------- */
+  #grid-canvas{
+    position:fixed; inset:0; width:100%; height:100%; z-index:0;
+    background:
+      radial-gradient(ellipse at 20% 20%, rgba(124,92,255,0.12), transparent 55%),
+      radial-gradient(ellipse at 80% 75%, rgba(53,230,196,0.10), transparent 55%),
+      var(--bg);
+  }
+  #particles{ position:fixed; inset:0; z-index:1; pointer-events:none; }
+
+  .scanline{
+    position:fixed; inset:0; z-index:2; pointer-events:none;
+    background: repeating-linear-gradient(
+      to bottom,
+      rgba(255,255,255,0.015) 0px,
+      rgba(255,255,255,0.015) 1px,
+      transparent 1px,
+      transparent 3px
+    );
+    mix-blend-mode: overlay;
+  }
+
+  /* ---------- layout ---------- */
+  .wrap{
+    position:relative; z-index:3;
+    min-height:100vh;
+    height:100%;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    padding: 6vh 6vw 4vh;
+    text-align:center;
+  }
+
+  .tag{
+    display:inline-flex;
+    align-items:center;
+    gap:.55em;
+    font-size:.78rem;
+    letter-spacing:.14em;
+    color:var(--accent2);
+    border:1px solid rgba(53,230,196,0.35);
+    padding:.5em 1.1em;
+    border-radius:999px;
+    background:rgba(53,230,196,0.06);
+    margin-bottom:2.4rem;
+  }
+  .tag .dot{
+    width:7px; height:7px; border-radius:50%;
+    background:var(--accent2);
+    box-shadow:0 0 10px var(--accent2);
+    animation:pulse 1.6s ease-in-out infinite;
+  }
+  @keyframes pulse{
+    0%,100%{ opacity:1; transform:scale(1); }
+    50%{ opacity:.35; transform:scale(.7); }
+  }
+
+  h1{
+    font-size: clamp(2.6rem, 8vw, 5.4rem);
+    line-height:1.02;
+    font-weight:700;
+    letter-spacing:-0.02em;
+    max-width:16ch;
+  }
+  h1 .line{
+    display:block;
+    background: linear-gradient(100deg, #ffffff 20%, var(--accent) 55%, var(--accent2) 80%);
+    -webkit-background-clip:text;
+    background-clip:text;
+    color:transparent;
+    background-size:220% auto;
+    animation: sheen 6s linear infinite;
+  }
+  @keyframes sheen{
+    0%{ background-position: 0% 50%; }
+    100%{ background-position: 220% 50%; }
+  }
+
+  p.sub{
+    margin-top:1.6rem;
+    max-width:46ch;
+    color:var(--muted);
+    font-size:1.02rem;
+    line-height:1.6;
+  }
+
+  /* ---------- countdown ---------- */
+  .countdown{
+    display:flex;
+    gap:clamp(.6rem, 2vw, 1.4rem);
+    margin-top:3.2rem;
+    flex-wrap:wrap;
+    justify-content:center;
+  }
+  .cbox{
+    width:clamp(70px, 18vw, 100px);
+    padding:1rem .4rem;
+    background:linear-gradient(180deg, var(--panel), rgba(14,19,38,0.4));
+    border:1px solid var(--line);
+    border-radius:14px;
+    position:relative;
+    overflow:hidden;
+  }
+  .cbox::before{
+    content:'';
+    position:absolute; inset:0;
+    background:linear-gradient(180deg, var(--accent-soft), transparent 60%);
+    opacity:.25;
+  }
+  .cbox .num{
+    font-size:clamp(1.6rem, 4vw, 2.4rem);
+    font-weight:700;
+    font-variant-numeric: tabular-nums;
+    position:relative;
+  }
+  .cbox .lbl{
+    margin-top:.35rem;
+    font-size:.66rem;
+    letter-spacing:.12em;
+    color:var(--muted);
+    position:relative;
+  }
+
+  /* ---------- orbit graphic ---------- */
+  .orbit-wrap{
+    position:relative;
+    width:clamp(140px,26vw,220px);
+    height:clamp(140px,26vw,220px);
+    margin:3.4rem auto 0;
+  }
+  .ring{
+    position:absolute; inset:0;
+    border:1px solid var(--line);
+    border-radius:50%;
+  }
+  .ring.r2{ inset:16%; border-color:rgba(124,92,255,0.22); }
+  .ring.r3{ inset:34%; border-color:rgba(53,230,196,0.22); }
+  .core{
+    position:absolute; inset:44%;
+    border-radius:50%;
+    background:radial-gradient(circle at 35% 30%, #fff, var(--accent) 45%, var(--accent2) 100%);
+    box-shadow:0 0 40px var(--accent-soft);
+    animation: corepulse 3s ease-in-out infinite;
+  }
+  @keyframes corepulse{
+    0%,100%{ transform:scale(1); }
+    50%{ transform:scale(1.12); }
+  }
+  .sat{
+    position:absolute;
+    width:9px; height:9px;
+    border-radius:50%;
+    background:var(--accent2);
+    box-shadow:0 0 12px var(--accent2);
+    top:50%; left:50%;
+    transform-origin: 0 0;
+  }
+  .orbit-wrap .spin1{ animation: spin 7s linear infinite; }
+  .orbit-wrap .spin2{ animation: spin 11s linear infinite reverse; }
+  @keyframes spin{
+    from{ transform: rotate(0deg) translateX(clamp(70px,13vw,110px)) rotate(0deg); }
+    to{ transform: rotate(360deg) translateX(clamp(70px,13vw,110px)) rotate(-360deg); }
+  }
+
+  /* ---------- notify form ---------- */
+  form{
+    margin-top:3.2rem;
+    display:flex;
+    gap:.6rem;
+    flex-wrap:wrap;
+    justify-content:center;
+    width:100%;
+    max-width:430px;
+  }
+  form input[type=email]{
+    flex:1 1 220px;
+    padding:.9rem 1.1rem;
+    border-radius:10px;
+    border:1px solid var(--line);
+    background:rgba(255,255,255,0.03);
+    color:var(--text);
+    font-size:.92rem;
+    outline:none;
+    transition:border-color .2s ease;
+  }
+  form input[type=email]:focus{
+    border-color: var(--accent2);
+  }
+  form input[type=email]::placeholder{ color:var(--muted); }
+  form button{
+    padding:.9rem 1.5rem;
+    border:none;
+    border-radius:10px;
+    background:linear-gradient(120deg, var(--accent), var(--accent2));
+    color:#04070d;
+    font-weight:700;
+    font-size:.92rem;
+    cursor:pointer;
+    transition:transform .18s ease, box-shadow .18s ease;
+  }
+  form button:hover{ transform:translateY(-2px); box-shadow:0 8px 24px var(--accent-soft); }
+  form button:focus-visible, form input:focus-visible{ outline:2px solid var(--accent2); outline-offset:2px; }
+
+  .note{
+    margin-top:.9rem;
+    font-size:.8rem;
+    color:var(--muted);
+    min-height:1.2em;
+  }
+
+  /* ---------- footer ---------- */
+  footer{
+    position:relative; z-index:3;
+    text-align:center;
+    padding:1.6rem 1rem calc(1.6rem + env(safe-area-inset-bottom,0px));
+    color:var(--muted);
+    font-size:.82rem;
+    border-top:1px solid var(--line);
+    background:rgba(6,8,16,0.5);
+    backdrop-filter: blur(6px);
+  }
+  footer strong{ color:var(--text); font-weight:600; }
+
+  @media (prefers-reduced-motion: reduce){
+    *{ animation-duration:0.001ms !important; animation-iteration-count:1 !important; transition-duration:0.001ms !important; }
+  }
+</style>
+</head>
+<body>
+
+<div id="grid-canvas"></div>
+<canvas id="particles"></canvas>
+<div class="scanline"></div>
+
+<div class="wrap">
+  <span class="tag"><span class="dot"></span>SYSTEM INITIALIZING</span>
+
+  <h1><span class="line">कुछ नया</span><span class="line">बहुत जल्द आ रहा है</span></h1>
+
+  <p class="sub">हम एक नया अनुभव तैयार कर रहे हैं — तेज़, आधुनिक और शानदार। लॉन्च होते ही आपको सबसे पहले खबर मिलेगी।</p>
+
+  <div class="orbit-wrap">
+    <div class="ring r1"></div>
+    <div class="ring r2"></div>
+    <div class="ring r3"></div>
+    <div class="core"></div>
+    <div class="spin1"><span class="sat"></span></div>
+    <div class="spin2"><span class="sat" style="background:var(--accent); box-shadow:0 0 12px var(--accent);"></span></div>
+  </div>
+
+  <div class="countdown" id="countdown">
+    <div class="cbox"><div class="num" id="dd">00</div><div class="lbl">दिन</div></div>
+    <div class="cbox"><div class="num" id="hh">00</div><div class="lbl">घंटे</div></div>
+    <div class="cbox"><div class="num" id="mm">00</div><div class="lbl">मिनट</div></div>
+    <div class="cbox"><div class="num" id="ss">00</div><div class="lbl">सेकंड</div></div>
+  </div>
+
+  <form id="notifyForm">
+    <input type="email" id="emailInput" placeholder="अपना ईमेल डालें" required>
+    <button type="submit">सूचित करें</button>
+  </form>
+  <div class="note" id="formNote"></div>
+</div>
+
+<footer>
+  &copy; <span id="year"></span> <strong>Morihix Private Limited</strong>. सर्वाधिकार सुरक्षित।
+</footer>
+
+<script>
+  // ---------- footer year ----------
+  document.getElementById('year').textContent = new Date().getFullYear();
+
+  // ---------- countdown (30 days from first load) ----------
+  var target = new Date();
+  target.setDate(target.getDate() + 30);
+
+  function pad(n){ return String(n).padStart(2,'0'); }
+
+  function tick(){
+    var now = new Date();
+    var diff = Math.max(0, target - now);
+
+    var d = Math.floor(diff / 86400000);
+    var h = Math.floor((diff % 86400000) / 3600000);
+    var m = Math.floor((diff % 3600000) / 60000);
+    var s = Math.floor((diff % 60000) / 1000);
+
+    document.getElementById('dd').textContent = pad(d);
+    document.getElementById('hh').textContent = pad(h);
+    document.getElementById('mm').textContent = pad(m);
+    document.getElementById('ss').textContent = pad(s);
+  }
+  tick();
+  setInterval(tick, 1000);
+
+  // ---------- notify form (front-end only) ----------
+  document.getElementById('notifyForm').addEventListener('submit', function(e){
+    e.preventDefault();
+    var note = document.getElementById('formNote');
+    var email = document.getElementById('emailInput').value.trim();
+    if(email){
+      note.textContent = 'धन्यवाद! लॉन्च होते ही आपको सूचित किया जाएगा।';
+      document.getElementById('emailInput').value = '';
+    }
+  });
+
+  // ---------- particle field ----------
+  (function(){
+    var canvas = document.getElementById('particles');
+    var ctx = canvas.getContext('2d');
+    var particles = [];
+    var W, H, reduceMotion;
+
+    function resize(){
+      W = canvas.width = window.innerWidth;
+      H = canvas.height = window.innerHeight;
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+    var count = Math.min(90, Math.floor((W*H)/18000));
+    for(var i=0;i<count;i++){
+      particles.push({
+        x: Math.random()*W,
+        y: Math.random()*H,
+        r: Math.random()*1.6 + 0.4,
+        vx: (Math.random()-0.5)*0.15,
+        vy: (Math.random()-0.5)*0.15,
+        a: Math.random()*0.5 + 0.15
+      });
+    }
+
+    function draw(){
+      ctx.clearRect(0,0,W,H);
+      for(var i=0;i<particles.length;i++){
+        var p = particles[i];
+        if(!reduceMotion){
+          p.x += p.vx;
+          p.y += p.vy;
+          if(p.x < 0) p.x = W;
+          if(p.x > W) p.x = 0;
+          if(p.y < 0) p.y = H;
+          if(p.y > H) p.y = 0;
+        }
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, p.r, 0, Math.PI*2);
+        ctx.fillStyle = 'rgba(180,190,255,' + p.a + ')';
+        ctx.fill();
+      }
+      if(!reduceMotion){
+        requestAnimationFrame(draw);
+      }
+    }
+    draw();
+  })();
+</script>
+</body>
+</html>
